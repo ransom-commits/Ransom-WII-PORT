@@ -17,15 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup devkitPro
+      - name: Verify Wii toolchain
         shell: bash
         run: |
           set -eux
-
-          export PATH="$DEVKITPPC/bin:$DEVKITPPC/powerpc-eabi/bin:$PATH"
-
-          echo "$DEVKITPPC/bin" >> "$GITHUB_PATH"
-          echo "$DEVKITPPC/powerpc-eabi/bin" >> "$GITHUB_PATH"
+          export PATH="$DEVKITPPC/bin:$DEVKITPPC/powerpc-eabi/bin:$DEVKITPRO/tools/bin:$PATH"
 
           echo "DEVKITPRO=$DEVKITPRO"
           echo "DEVKITPPC=$DEVKITPPC"
@@ -33,46 +29,71 @@ jobs:
           command -v powerpc-eabi-gcc
           powerpc-eabi-gcc --version
 
-          test -f "$DEVKITPPC/wii_rules"
           test -d "$DEVKITPRO/libogc"
+          test -d "$DEVKITPRO/libogc/include"
           test -d "$DEVKITPRO/libogc/lib/wii"
 
-      - name: Check project
+          test -x "$DEVKITPPC/bin/powerpc-eabi-gcc"
+          test -x "$DEVKITPRO/tools/bin/elf2dol"
+
+          echo "Compiler:"
+          "$DEVKITPPC/bin/powerpc-eabi-gcc" --version
+
+          echo "ELF2DOL:"
+          "$DEVKITPRO/tools/bin/elf2dol" --help || true
+
+          echo "Wii toolchain OK"
+
+      - name: Check project files
         shell: bash
         run: |
           set -eux
-
           test -f main.c
           test -f game.c
           test -f game.h
           test -f Makefile
-
+          echo "Project files:"
+          ls -lah
           echo "Project structure OK"
 
-      - name: Build
+      - name: Clean
         shell: bash
         run: |
           set -eux
-
-          export PATH="$DEVKITPPC/bin:$DEVKITPPC/powerpc-eabi/bin:$PATH"
-
+          export PATH="$DEVKITPPC/bin:$DEVKITPPC/powerpc-eabi/bin:$DEVKITPRO/tools/bin:$PATH"
           make clean
+
+      - name: Build DOL
+        shell: bash
+        run: |
+          set -eux
+          export PATH="$DEVKITPPC/bin:$DEVKITPPC/powerpc-eabi/bin:$DEVKITPRO/tools/bin:$PATH"
+          echo "powerpc-eabi-gcc:"
+          command -v powerpc-eabi-gcc
+          echo "elf2dol:"
+          command -v elf2dol
+          echo "Building..."
           make V=1
 
       - name: Verify DOL
         shell: bash
         run: |
           set -eux
-
+          test -s ransom-wii.elf
           test -s ransom-wii.dol
-
-          echo "SUCCESS:"
+          echo "ELF:"
+          ls -lh ransom-wii.elf
+          echo "DOL:"
           ls -lh ransom-wii.dol
-          file ransom-wii.dol
+          file ransom-wii.elf || true
+          file ransom-wii.dol || true
+          echo "DOL successfully created."
 
-      - name: Upload DOL
+      - name: Upload Wii DOL
         uses: actions/upload-artifact@v4
         with:
           name: ransom-wii-dol
-          path: ransom-wii.dol
+          path: |
+            ransom-wii.dol
+            ransom-wii.elf
           if-no-files-found: error
