@@ -1,0 +1,35 @@
+name: Build Wii
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: devkitpro/devkitppc:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Wii DOL
+        run: |
+          make clean || true
+          make
+
+      - name: Check DOL
+        run: |
+          test -s ransom-wii.dol
+          ls -lh ransom-wii.dol
+
+      - name: Upload DOL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ransom-wii-dol
+          path: ransom-wii.dol
+          if-no-files-found: error
