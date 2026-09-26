@@ -10,26 +10,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    container:
-      image: devkitpro/devkitppc:latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Wii DOL
+      - name: Install devkitPro
+        uses: devkitPro/gha-setup@v1
+        with:
+          project: wii
+
+      - name: Build
         run: |
           make clean || true
           make
 
       - name: Check DOL
         run: |
-          test -s ransom-wii.dol
           ls -lh ransom-wii.dol
+          file ransom-wii.dol
 
       - name: Upload DOL
         uses: actions/upload-artifact@v4
         with:
           name: ransom-wii-dol
           path: ransom-wii.dol
-          if-no-files-found: error
