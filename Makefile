@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------------------
-# R4NS0M Simulator - Wii
+# R4NS0M Simulator Wii Port
 #---------------------------------------------------------------------------------
 
 TARGET := ransom-wii
@@ -19,41 +19,46 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 
 CFILES := $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-OFILES := $(patsubst %.c,$(BUILD)/%.o,$(CFILES))
+OFILES := $(CFILES:%.c=$(BUILD)/%.o)
 
 #---------------------------------------------------------------------------------
 # Compiler flags
 #---------------------------------------------------------------------------------
 
-CFLAGS := -O2 -Wall -ffunction-sections -fdata-sections
+CFLAGS := -O2 -Wall
+CFLAGS += -ffunction-sections
+CFLAGS += -fdata-sections
 CFLAGS += $(MACHDEP)
 
 #---------------------------------------------------------------------------------
 # Include paths
 #---------------------------------------------------------------------------------
 
-INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir))
+INCLUDE := -I$(CURDIR)/include
 INCLUDE += -I$(LIBOGC_INC)
+
+#---------------------------------------------------------------------------------
+# Libraries
+#---------------------------------------------------------------------------------
+
+LIBS := -lwiiuse
+LIBS += -lbte
+LIBS += -lfat
+LIBS += -logc
+LIBS += -lm
 
 #---------------------------------------------------------------------------------
 # Library paths
 #---------------------------------------------------------------------------------
 
 LIBPATHS := -L$(LIBOGC_LIB)
-LIBPATHS += -L$(PORTLIBS_PATH)/wii/lib
-LIBPATHS += -L$(PORTLIBS_PATH)/ppc/lib
-
-#---------------------------------------------------------------------------------
-# Libraries
-#---------------------------------------------------------------------------------
-
-LIBS := -lwiiuse -lbte -lfat -logc -lm
 
 #---------------------------------------------------------------------------------
 # Linker flags
 #---------------------------------------------------------------------------------
 
-LDFLAGS := $(MACHDEP) -Wl,--gc-sections
+LDFLAGS := $(MACHDEP)
+LDFLAGS += -Wl,--gc-sections
 
 #---------------------------------------------------------------------------------
 # Build
@@ -62,8 +67,8 @@ LDFLAGS := $(MACHDEP) -Wl,--gc-sections
 all: $(TARGET).dol
 
 $(TARGET).elf: $(OFILES)
-	@echo "Linking $@"
-	$(CC) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+	@echo "Linking $(TARGET).elf"
+	$(LD) $(OFILES) $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
 
 $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
@@ -71,6 +76,8 @@ $(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD) $(TARGET).elf $(TARGET).dol
+	rm -rf $(BUILD)
+	rm -f $(TARGET).elf
+	rm -f $(TARGET).dol
 
 .PHONY: all clean
