@@ -10,14 +10,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    container:
+      image: devkitpro/devkitppc:latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install devkitPro
-        uses: devkitPro/gha-setup@v1
-        with:
-          project: wii
+      - name: Check devkitPPC
+        run: |
+          echo "DEVKITPRO=$DEVKITPRO"
+          echo "DEVKITPPC=$DEVKITPPC"
+          which powerpc-eabi-gcc
+          powerpc-eabi-gcc --version
 
       - name: Build
         run: |
