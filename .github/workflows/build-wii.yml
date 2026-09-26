@@ -113,7 +113,7 @@ jobs:
           set -eux
           API="https://api.github.com"
           REPO="${{ github.repository }}"
-          NOTES="Automated Wii build from commit $SHA. Includes the current GX graphical renderer, Wii Remote pointer controls, item rendering, timer, progress UI, success/game-over overlays, ELF, and DOL."
+          export NOTES="Automated Wii build from commit $SHA. Includes the current GX graphical renderer, Wii Remote pointer controls, item rendering, timer, progress UI, success/game-over overlays, ELF, and DOL."
           RELEASE_JSON=$(python3 -c 'import json,os; print(json.dumps({"tag_name":os.environ["TAG"],"target_commitish":os.environ["SHA"],"name":os.environ["TITLE"],"body":os.environ["NOTES"],"draft":False,"prerelease":False}))')
           RELEASE=$(curl -fsSL -X POST "$API/repos/$REPO/releases" \
             -H "Authorization: Bearer $GH_TOKEN" \
