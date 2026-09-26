@@ -98,10 +98,16 @@ static void draw(GameState *g, float cursor_x, float cursor_y) {
 }
 
 static void gx_init(void) {
+    Mtx modelview;
+    guMtxIdentity(modelview);
+    GX_LoadPosMtxImm(modelview, GX_PNMTX0);
     GX_Init(gp_fifo, 256 * 1024);
     GX_SetCopyClear((GXColor){0,0,0,255}, 0);
     GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
     GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
+    GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
+    GX_SetDispCopyDst(rmode->fbWidth, rmode->xfbHeight);
+    GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, GX_TRUE, rmode->vfilter);
     GX_SetCullMode(GX_CULL_NONE);
     GX_SetNumChans(1);
     GX_SetChanCtrl(GX_COLOR0A0, GX_ENABLE, GX_SRC_VTX, GX_SRC_REG,
@@ -127,6 +133,8 @@ int main(int argc, char **argv) {
 
     VIDEO_Init();
     WPAD_Init();
+    WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
+    WPAD_SetVRes(0, 640, 480);
     rmode = VIDEO_GetPreferredMode(NULL);
 
     xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
@@ -146,6 +154,7 @@ int main(int argc, char **argv) {
 
     float cursor_x = SCREEN_W * 0.5f;
     float cursor_y = SCREEN_H * 0.5f;
+    int frame = 0;
 
     while (1) {
         WPAD_ScanPads();
@@ -159,20 +168,33 @@ int main(int argc, char **argv) {
         if (ir.valid) {
             cursor_x = ir.x;
             cursor_y = ir.y;
-            game_pointer(&game, cursor_x, cursor_y, held & WPAD_BUTTON_A);
+        } else {
+            /* Dolphin can be configured without an IR source. Keep the cursor
+               usable with the D-pad so the game remains testable. */
+            const float speed = 5.0f;
+            if (held & WPAD_BUTTON_LEFT)  cursor_x -= speed;
+            if (held & WPAD_BUTTON_RIGHT) cursor_x += speed;
+            if (held & WPAD_BUTTON_UP)    cursor_y -= speed;
+            if (held & WPAD_BUTTON_DOWN)  cursor_y += speed;
+            if (cursor_x < 0) cursor_x = 0;
+            if (cursor_x > SCREEN_W) cursor_x = SCREEN_W;
+            if (cursor_y < 58) cursor_y = 58;
+            if (cursor_y > SCREEN_H) cursor_y = SCREEN_H;
         }
+        game_pointer(&game, cursor_x, cursor_y, held & WPAD_BUTTON_A);
 
         game_update(&game, 1.0f / 60.0f);
 
         GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
         draw(&game, cursor_x, cursor_y);
         GX_DrawDone();
-        GX_CopyDisp(xfb[0], GX_TRUE);
+        GX_CopyDisp(xfb[frame], GX_TRUE);
         GX_Flush();
 
-        VIDEO_SetNextFramebuffer(xfb[0]);
+        VIDEO_SetNextFramebuffer(xfb[frame]);
         VIDEO_Flush();
         VIDEO_WaitVSync();
+        frame ^= 1;
     }
 
     WPAD_Shutdown();
