@@ -1,57 +1,70 @@
 .SUFFIXES:
 
-ifeq ($(strip $(DEVKITPPC)),)
-$(error "DEVKITPPC is not set")
+ifeq ($(strip $(DEVKITPRO)),)
+$(error DEVKITPRO is not set)
 endif
 
-include $(DEVKITPPC)/wii_rules
+ifeq ($(strip $(DEVKITPPC)),)
+$(error DEVKITPPC is not set)
+endif
 
 TARGET := ransom-wii
 
-CFILES := main.c game.c
-OFILES := main.o game.o
+CC := $(DEVKITPPC)/bin/powerpc-eabi-gcc
+ELF2DOL := $(DEVKITPPC)/bin/elf2dol
 
-CFLAGS := -O2 -Wall
+LIBOGC_INC := $(DEVKITPRO)/libogc/include
+LIBOGC_LIB := $(DEVKITPRO)/libogc/lib/wii
+
+CFLAGS := -O2
+CFLAGS += -Wall
 CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
-CFLAGS += $(MACHDEP)
+CFLAGS += -DGEKKO
+CFLAGS += -mrvl
+CFLAGS += -mcpu=750
+CFLAGS += -meabi
+CFLAGS += -mhard-float
+CFLAGS += -I$(LIBOGC_INC)
+CFLAGS += -I.
 
-# libogc headers
-INCLUDE := -I$(LIBOGC_INC)
-INCLUDE += -I.
+LDFLAGS := -DGEKKO
+LDFLAGS += -mrvl
+LDFLAGS += -mcpu=750
+LDFLAGS += -meabi
+LDFLAGS += -mhard-float
+LDFLAGS += -Wl,--gc-sections
 
-# libogc Wii libraries
-LIBPATHS := -L$(LIBOGC_LIB)
-
-LIBS := -lwiiuse
+LIBS := -L$(LIBOGC_LIB)
+LIBS += -lwiiuse
 LIBS += -lbte
 LIBS += -lfat
 LIBS += -logc
 LIBS += -lm
 
-LDFLAGS := $(MACHDEP)
-LDFLAGS += -Wl,--gc-sections
+OBJECTS := main.o game.o
 
-.PHONY: all clean
-
+.PHONY: all
 all: $(TARGET).dol
 
 main.o: main.c game.h
 	@echo "Compiling main.c"
-	$(CC) $(CFLAGS) $(INCLUDE) -c main.c -o main.o
+	$(CC) $(CFLAGS) -c main.c -o main.o
 
 game.o: game.c game.h
 	@echo "Compiling game.c"
-	$(CC) $(CFLAGS) $(INCLUDE) -c game.c -o game.o
+	$(CC) $(CFLAGS) -c game.c -o game.o
 
-$(TARGET).elf: $(OFILES)
+$(TARGET).elf: $(OBJECTS)
 	@echo "Linking $(TARGET).elf"
-	$(CC) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $(TARGET).elf
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(TARGET).elf
 
 $(TARGET).dol: $(TARGET).elf
 	@echo "Creating $(TARGET).dol"
-	$(ELF2DOL) $(TARGET).elf $(TARGET).dol
+	test -x "$(ELF2DOL)"
+	"$(ELF2DOL)" "$(TARGET).elf" "$(TARGET).dol"
 
+.PHONY: clean
 clean:
 	rm -f main.o
 	rm -f game.o
