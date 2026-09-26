@@ -17,24 +17,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup devkitPPC
+      - name: Verify Wii toolchain
         run: |
-          export PATH="$DEVKITPPC/bin:$PATH"
-          echo "$DEVKITPPC/bin" >> "$GITHUB_PATH"
           echo "DEVKITPRO=$DEVKITPRO"
           echo "DEVKITPPC=$DEVKITPPC"
-          ls -la "$DEVKITPPC/bin"
           which powerpc-eabi-gcc
           powerpc-eabi-gcc --version
+          test -f "$DEVKITPPC/wii_rules"
+          test -d "$DEVKITPRO/libogc"
+          echo "Wii toolchain OK"
 
       - name: Build
         run: |
-          export PATH="$DEVKITPPC/bin:$PATH"
           make clean || true
-          make
+          make V=1
 
-      - name: Check DOL
+      - name: Verify output
         run: |
+          test -s ransom-wii.dol
           ls -lh ransom-wii.dol
           file ransom-wii.dol
 
@@ -43,3 +43,4 @@ jobs:
         with:
           name: ransom-wii-dol
           path: ransom-wii.dol
+          if-no-files-found: error
