@@ -3,6 +3,7 @@
 #include <ogcsys.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include "game.h"
 
 #define SCREEN_W 640.0f
@@ -11,10 +12,6 @@
 static void *xfb[2];
 static GXRModeObj *rmode;
 static u8 *gp_fifo ATTRIBUTE_ALIGN(32);
-
-static void set_color(u8 r, u8 g, u8 b, u8 a) {
-    GX_SetChanMatColor(GX_COLOR0A0, (GXColor){r, g, b, a});
-}
 
 static void quad(float x, float y, float w, float h, GXColor c) {
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
@@ -108,7 +105,7 @@ static void gx_init(void) {
     GX_SetCullMode(GX_CULL_NONE);
     GX_SetNumChans(1);
     GX_SetChanCtrl(GX_COLOR0A0, GX_ENABLE, GX_SRC_VTX, GX_SRC_REG,
-                   GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+                   GX_LIGHTNULL, GX_DF_NONE, GX_AF_NONE);
     GX_SetNumTevStages(1);
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
