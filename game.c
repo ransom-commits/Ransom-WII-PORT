@@ -10,12 +10,15 @@ static void spawn_item(GameState *g) {
         if (!g->items[i].active) {
             GameItem *it = &g->items[i];
             float r = frand01();
+
             it->type = (r < 0.004f) ? ITEM_CRUCIFIX :
-                       (r < 0.009f) ? ITEM_HONEYPOT : ITEM_COIN;
-            it->x = 80.0f + frand01() * 480.0f;
-            it->y = 70.0f + frand01() * 330.0f;
-            it->width = 48.0f;
-            it->height = 48.0f;
+                       (r < 0.009f) ? ITEM_HONEYPOT :
+                       (r < 0.012f) ? ITEM_CD : ITEM_COIN;
+
+            it->x = 30.0f + frand01() * 550.0f;
+            it->y = 80.0f + frand01() * 350.0f;
+            it->width = 42.0f;
+            it->height = 42.0f;
             it->active = 1;
             it->id = g->nextItemId++;
             return;
@@ -59,9 +62,11 @@ void game_pointer(GameState *g, float x, float y, int pressed) {
     for (int i = 0; i < MAX_ITEMS; ++i) {
         GameItem *it = &g->items[i];
         if (!it->active) continue;
+
         if (x >= it->x && x <= it->x + it->width &&
             y >= it->y && y <= it->y + it->height) {
-            if (it->type == ITEM_COIN) g->currentCoins++;
+            if (it->type == ITEM_COIN)
+                g->currentCoins++;
             it->active = 0;
             break;
         }
