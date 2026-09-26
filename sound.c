@@ -1,5 +1,6 @@
 #include "sound.h"
 #include <gccore.h>
+#include <asndlib.h>
 #include <string.h>
 
 #define SOUND_RATE 22050
