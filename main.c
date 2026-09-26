@@ -11,6 +11,7 @@
 
 static void *xfb[2];
 static GXRModeObj *rmode;
+static u32 xfbHeight;
 static u8 *gp_fifo ATTRIBUTE_ALIGN(32);
 
 static void quad(float x, float y, float w, float h, GXColor c) {
@@ -104,10 +105,14 @@ static void gx_init(void) {
     GX_Init(gp_fifo, 256 * 1024);
     GX_SetCopyClear((GXColor){0,0,0,255}, 0);
     GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
+    xfbHeight = GX_SetDispCopyYScale(GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight));
     GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
     GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
     GX_SetDispCopyDst(rmode->fbWidth, rmode->xfbHeight);
     GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, GX_TRUE, rmode->vfilter);
+    GX_SetDispCopyDst(rmode->fbWidth, xfbHeight);
+    GX_SetFieldMode(rmode->field_rendering, (rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE);
+    GX_SetPixelFmt(rmode->aa ? GX_PF_RGB565_Z16 : GX_PF_RGB8_Z24, GX_ZC_LINEAR);
     GX_SetCullMode(GX_CULL_NONE);
     GX_SetNumChans(1);
     GX_SetChanCtrl(GX_COLOR0A0, GX_ENABLE, GX_SRC_VTX, GX_SRC_REG,
@@ -145,6 +150,7 @@ int main(int argc, char **argv) {
     VIDEO_SetBlack(FALSE);
     VIDEO_Flush();
     VIDEO_WaitVSync();
+    if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 
     gp_fifo = memalign(32, 256 * 1024);
     gx_init();
