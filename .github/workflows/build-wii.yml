@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure devkitPro
+      - name: Setup devkitPro
         shell: bash
         run: |
           set -eux
@@ -34,24 +34,20 @@ jobs:
           powerpc-eabi-gcc --version
 
           test -f "$DEVKITPPC/wii_rules"
-          test -f "$DEVKITPPC/base_rules"
           test -d "$DEVKITPRO/libogc"
-          test -d "$DEVKITPRO/libogc/include"
           test -d "$DEVKITPRO/libogc/lib/wii"
 
-          echo "devkitPro Wii environment OK"
-
-      - name: Inspect project
+      - name: Check project
         shell: bash
         run: |
           set -eux
 
-          echo "Project files:"
-          find . -maxdepth 3 -type f | sort
+          test -f main.c
+          test -f game.c
+          test -f game.h
+          test -f Makefile
 
-          echo
-          echo "Source files:"
-          find source include -type f -print
+          echo "Project structure OK"
 
       - name: Build
         shell: bash
@@ -68,15 +64,13 @@ jobs:
         run: |
           set -eux
 
-          test -f ransom-wii.dol
           test -s ransom-wii.dol
 
-          echo "DOL successfully built:"
+          echo "SUCCESS:"
           ls -lh ransom-wii.dol
-
           file ransom-wii.dol
 
-      - name: Upload Wii DOL
+      - name: Upload DOL
         uses: actions/upload-artifact@v4
         with:
           name: ransom-wii-dol
