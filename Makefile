@@ -40,8 +40,8 @@ LIBS := -L$(LIBOGC_LIB)
 LIBS += -lwiiuse
 LIBS += -lbte
 LIBS += -lfat
-LIBS += -logc
 LIBS += -lasnd
+LIBS += -logc
 LIBS += -lm
 
 SOUND_RAW := $(wildcard assets/sounds/*.raw)
