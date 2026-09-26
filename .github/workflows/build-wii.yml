@@ -17,15 +17,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check devkitPPC
+      - name: Setup devkitPPC
         run: |
+          export PATH="$DEVKITPPC/bin:$PATH"
+          echo "$DEVKITPPC/bin" >> "$GITHUB_PATH"
           echo "DEVKITPRO=$DEVKITPRO"
           echo "DEVKITPPC=$DEVKITPPC"
+          ls -la "$DEVKITPPC/bin"
           which powerpc-eabi-gcc
           powerpc-eabi-gcc --version
 
       - name: Build
         run: |
+          export PATH="$DEVKITPPC/bin:$PATH"
           make clean || true
           make
 
