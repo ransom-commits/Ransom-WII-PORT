@@ -17,22 +17,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify Wii toolchain
+      - name: Setup Wii toolchain
         run: |
+          export PATH="$DEVKITPPC/bin:$PATH"
+          echo "$DEVKITPPC/bin" >> "$GITHUB_PATH"
+
           echo "DEVKITPRO=$DEVKITPRO"
           echo "DEVKITPPC=$DEVKITPPC"
-          which powerpc-eabi-gcc
-          powerpc-eabi-gcc --version
+
+          "$DEVKITPPC/bin/powerpc-eabi-gcc" --version
+
           test -f "$DEVKITPPC/wii_rules"
           test -d "$DEVKITPRO/libogc"
+
           echo "Wii toolchain OK"
 
       - name: Build
         run: |
+          export PATH="$DEVKITPPC/bin:$PATH"
           make clean || true
           make V=1
 
-      - name: Verify output
+      - name: Verify DOL
         run: |
           test -s ransom-wii.dol
           ls -lh ransom-wii.dol
