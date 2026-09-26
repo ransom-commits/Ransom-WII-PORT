@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include "game.h"
+#include "sound.h"
 
 #define SCREEN_W 640.0f
 #define SCREEN_H 480.0f
@@ -154,6 +155,7 @@ int main(int argc, char **argv) {
 
     gp_fifo = memalign(32, 256 * 1024);
     gx_init();
+    sound_init();
 
     GameState game;
     game_init(&game);
@@ -203,6 +205,7 @@ int main(int argc, char **argv) {
         frame ^= 1;
     }
 
+    sound_shutdown();
     WPAD_Shutdown();
     free(gp_fifo);
     return 0;
