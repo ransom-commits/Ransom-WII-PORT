@@ -1,31 +1,57 @@
+#---------------------------------------------------------------------------------
+# Clear the implicit built in rules
+#---------------------------------------------------------------------------------
+.SUFFIXES:
+
+#---------------------------------------------------------------------------------
+ifeq ($(strip $(DEVKITPPC)),)
+$(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
+endif
+
+include $(DEVKITPPC)/wii_rules
+
+#---------------------------------------------------------------------------------
+# Target
+#---------------------------------------------------------------------------------
 TARGET := ransom-wii
+
+#---------------------------------------------------------------------------------
+# Directories
+#---------------------------------------------------------------------------------
 BUILD := build
 SOURCES := source
 INCLUDES := include
 
+#---------------------------------------------------------------------------------
+# Source files
+#---------------------------------------------------------------------------------
 CFILES := $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
 OFILES := $(CFILES:%.c=$(BUILD)/%.o)
 
-CFLAGS := -O2 -Wall -mcpu=750 -meabi -mhard-float -ffunction-sections -fdata-sections $(foreach dir,$(INCLUDES),-I$(dir))
-LDFLAGS := -Wl,--gc-sections
-LIBS := -logc -lwiiuse -lbte -lfat
+#---------------------------------------------------------------------------------
+# Compiler flags
+#---------------------------------------------------------------------------------
+CFLAGS := -O2 -Wall -ffunction-sections -fdata-sections
 
-.PHONY: all clean
+#---------------------------------------------------------------------------------
+# Libraries
+#---------------------------------------------------------------------------------
+LIBS := -lwiiuse -lbte -lfat -logc
+
+#---------------------------------------------------------------------------------
+# Build
+#---------------------------------------------------------------------------------
 
 all: $(TARGET).dol
 
-$(BUILD):
-	mkdir -p $(BUILD)/source
-
-$(BUILD)/%.o: %.c | $(BUILD)
-	mkdir -p $(dir $@)
-	powerpc-eabi-gcc $(CFLAGS) -c $< -o $@
-
 $(TARGET).elf: $(OFILES)
-	powerpc-eabi-gcc $(LDFLAGS) $^ $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $(LIBPATHS) $(OFILES) $(LIBS) -o $@
 
-$(TARGET).dol: $(TARGET).elf
-	elf2dol $< $@
+$(BUILD)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(MACHDEP) -I$(INCLUDES) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD) $(TARGET).elf $(TARGET).dol
+
+.PHONY: all clean
