@@ -11,6 +11,7 @@ endif
 TARGET := ransom-wii
 
 CC := $(DEVKITPPC)/bin/powerpc-eabi-gcc
+LD := $(DEVKITPPC)/bin/powerpc-eabi-ld
 ELF2DOL := $(DEVKITPRO)/tools/bin/elf2dol
 
 LIBOGC_INC := $(DEVKITPRO)/libogc/include
@@ -42,18 +43,30 @@ LIBS += -lfat
 LIBS += -logc
 LIBS += -lm
 
-OBJECTS := main.o game.o
+SOUND_RAW := $(wildcard assets/sounds/*.raw)
+SOUND_OBJS := $(SOUND_RAW:.raw=.o)
+OBJECTS := main.o game.o sound.o $(SOUND_OBJS)
 
 .PHONY: all
 all: $(TARGET).dol
 
-main.o: main.c game.h
+main.o: main.c game.h sound.h
 	@echo "Compiling main.c"
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
-game.o: game.c game.h
+game.o: game.c game.h sound.h
 	@echo "Compiling game.c"
 	$(CC) $(CFLAGS) -c game.c -o game.o
+
+sound.o: sound.c sound.h
+	@echo "Compiling sound.c"
+	$(CC) $(CFLAGS) -c sound.c -o sound.o
+
+# Convert each raw PCM file into a relocatable object. This keeps the
+# original samples inside the DOL without requiring a filesystem at runtime.
+assets/sounds/%.o: assets/sounds/%.raw
+	@echo "Embedding sound $<"
+	$(LD) -r -b binary -o $@ $<
 
 $(TARGET).elf: $(OBJECTS)
 	@echo "Linking $(TARGET).elf"
@@ -68,5 +81,7 @@ $(TARGET).dol: $(TARGET).elf
 clean:
 	rm -f main.o
 	rm -f game.o
+	rm -f sound.o
+	rm -f assets/sounds/*.o
 	rm -f $(TARGET).elf
 	rm -f $(TARGET).dol
