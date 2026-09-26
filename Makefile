@@ -11,7 +11,7 @@ endif
 TARGET := ransom-wii
 
 CC := $(DEVKITPPC)/bin/powerpc-eabi-gcc
-ELF2DOL := $(DEVKITPPC)/bin/elf2dol
+ELF2DOL := $(DEVKITPRO)/tools/bin/elf2dol
 
 LIBOGC_INC := $(DEVKITPRO)/libogc/include
 LIBOGC_LIB := $(DEVKITPRO)/libogc/lib/wii
