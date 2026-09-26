@@ -1,83 +1,45 @@
-#---------------------------------------------------------------------------------
-# R4NS0M Simulator Wii Port
-#---------------------------------------------------------------------------------
+.SUFFIXES:
 
-TARGET := ransom-wii
-
-BUILD := build
-SOURCES := source
-INCLUDES := include
-
-#---------------------------------------------------------------------------------
-# devkitPPC Wii rules
-#---------------------------------------------------------------------------------
+ifeq ($(strip $(DEVKITPPC)),)
+$(error "DEVKITPPC is not set")
+endif
 
 include $(DEVKITPPC)/wii_rules
 
-#---------------------------------------------------------------------------------
-# Source files
-#---------------------------------------------------------------------------------
+TARGET := ransom-wii
 
-CFILES := $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-OFILES := $(CFILES:%.c=$(BUILD)/%.o)
+CFILES := main.c game.c
+OFILES := $(CFILES:.c=.o)
 
-#---------------------------------------------------------------------------------
-# Compiler flags
-#---------------------------------------------------------------------------------
-
-CFLAGS := -O2 -Wall
-CFLAGS += -ffunction-sections
-CFLAGS += -fdata-sections
+CFLAGS := -O2 -Wall -ffunction-sections -fdata-sections
 CFLAGS += $(MACHDEP)
 
-#---------------------------------------------------------------------------------
-# Include paths
-#---------------------------------------------------------------------------------
+INCLUDE := -I.
 
-INCLUDE := -I$(CURDIR)/include
-INCLUDE += -I$(LIBOGC_INC)
-
-#---------------------------------------------------------------------------------
-# Libraries
-#---------------------------------------------------------------------------------
-
-LIBS := -lwiiuse
-LIBS += -lbte
-LIBS += -lfat
-LIBS += -logc
-LIBS += -lm
-
-#---------------------------------------------------------------------------------
-# Library paths
-#---------------------------------------------------------------------------------
+LIBS := -lwiiuse -lbte -lfat -logc -lm
 
 LIBPATHS := -L$(LIBOGC_LIB)
-
-#---------------------------------------------------------------------------------
-# Linker flags
-#---------------------------------------------------------------------------------
 
 LDFLAGS := $(MACHDEP)
 LDFLAGS += -Wl,--gc-sections
 
-#---------------------------------------------------------------------------------
-# Build
-#---------------------------------------------------------------------------------
+.PHONY: all clean
 
 all: $(TARGET).dol
 
-$(TARGET).elf: $(OFILES)
-	@echo "Linking $(TARGET).elf"
-	$(LD) $(OFILES) $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
-
-$(BUILD)/%.o: %.c
-	@mkdir -p $(dir $@)
+%.o: %.c
 	@echo "Compiling $<"
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
+$(TARGET).elf: $(OFILES)
+	@echo "Linking $@"
+	$(CC) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+
+$(TARGET).dol: $(TARGET).elf
+	@echo "Creating DOL"
+	$(ELF2DOL) $< $@
+
 clean:
-	rm -rf $(BUILD)
+	rm -f $(OFILES)
 	rm -f $(TARGET).elf
 	rm -f $(TARGET).dol
-
-.PHONY: all clean
