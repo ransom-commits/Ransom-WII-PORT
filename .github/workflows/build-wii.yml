@@ -10,6 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     container:
       image: devkitpro/devkitppc:latest
 
@@ -97,3 +100,18 @@ jobs:
             ransom-wii.dol
             ransom-wii.elf
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eux
+          TAG="wii-build-${{ github.run_number }}"
+          TITLE="R4NS0M Simulator Wii Build ${{ github.run_number }}"
+          gh release create "$TAG" ransom-wii.dol ransom-wii.elf \\
+            --repo "${{ github.repository }}" \\
+            --title "$TITLE" \\
+            --notes "Automated Wii build from commit ${{ github.sha }}.\n\nIncludes the current GX graphical renderer, Wii Remote pointer controls, item rendering, timer, progress UI, success/game-over overlays, ELF, and DOL." \\
+            --target "${{ github.sha }}"
