@@ -41,6 +41,7 @@ LIBS += -lwiiuse
 LIBS += -lbte
 LIBS += -lfat
 LIBS += -logc
+LIBS += -lasnd
 LIBS += -lm
 
 SOUND_RAW := $(wildcard assets/sounds/*.raw)
